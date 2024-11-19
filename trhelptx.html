@@ -10,27 +10,161 @@ github.com/ianlow27/trhelptxhtml
 |Author: Ian Low
 |Copyright (c) 2024 Ian Low
 |Usage Rights: MIT License
-<table style='width:95%;' border=0 cellspacing=0 cellpadding=0 >
+[<span style='color:blue;' id='spmsg'>loading vocab...</span>]
+<table style='width:90%;' border=0 cellspacing=0 cellpadding=0 >
 <tr>
-<td valign='top' style='width:69%;padding:0px;margin:0px;'>
-<textarea id='tx1' style='width:98%;'></textarea>
+<td valign='top' style='width:60%;padding:0px;margin:0px;'>
+English text input:
+<textarea id='tx1' style='width:98%;height:150px;'></textarea>
 </td>
-<td valign='top' style='width:29%;padding:0px;margin:0px;'>
-<textarea id='tx1' style='width:95%;'></textarea>
+<td valign='top' style='width:10%;padding:0px;margin:0px;'>
+Ignore: 
+<textarea id='tx2' style='font-size:80%;width:90%;height:150px;'></textarea>
+</td>
+<td valign='top' style='width:25%;padding:0px;margin:0px;'>
+New vocab:
+<nobr> 
+<textarea id='tx3' style='font-size:80%;width:90%;height:150px;'></textarea>
+<button id='btn1' style='vertical-align:top;' onclick='func1();'>Submit</button> 
+</nobr>
+</td>
 </tr>
-</td>
 </table>
-<button id='btn1'>Submit</button>
-<button id='btn1' onclick='func1();'>Submit</button>
-<div id='dv1'>
+<div style='width:97%;'> 
+<textarea id='txout' style='width:90%;height:150px;'></textarea>
+<button id='btn2' style='vertical-align:top;' onclick='func2();'>Submit</button>
 </div>
+<div id='dv1'></div> 
+<script src='./vocab_cym_2411.js'></script> 
 <script>
-  document.getElementById('tx1').focus();
-  document.getElementById('dv1').innerHTML=
-    "<div style='background-color:#ffddbb;'>Output here!</div>";
+  setTimeout("loadvocab();", 5 * 1000);
+  const tx1   = document.getElementById('tx1'); 
+  const tx2   = document.getElementById('tx2');
+  const tx3   = document.getElementById('tx3'); 
+  const txout = document.getElementById('txout'); 
+  const spmsg = document.getElementById('spmsg'); 
+  const btn1 = document.getElementById('btn1'); 
+  const btn2 = document.getElementById('btn2'); 
+  const dv1  = document.getElementById('dv1'); 
+  tx1.value = localStorage.getItem('tx1');
+  tx2.value = localStorage.getItem('tx2');
+  tx3.value = localStorage.getItem('tx3'); 
+  txout.value = localStorage.getItem('txout');
+  tx1.focus();
+  dv1.innerHTML= "<div style='background-color:#ffddbb;'>Output here!</div>";
+//--------------------------------------
+// Function for processing of text to HTML output
+function func2(){ 
+  let htmlstr='';
+  const atx = txout.value.split(/\n/);
+  for(engln in atx){
+    console.log(atx[engln]);
+    if(atx[engln].trim() == ''){ htmlstr+='<br/>\n'; continue; }
+    if(atx[engln].trim() == '///'){ htmlstr+='<br/>\n'; continue; }
+    const aengln = atx[engln].split(/\|/);
+    for(engphrs in aengln){
+      if(aengln[engphrs].substr(0,1)=='!'){ 
+        const atmp1 = aengln[engphrs].split(/\/\//);
+        atmp1[0] = atmp1[0].substr(1);
+        if(typeof atmp1[1] != 'undefined'){
+          const atmp2 = atmp1[1].split(/\//);
+          let tmpstr = '';
+          for(i in atmp2){
+            if(atmp2[i].substr(0,1)=='@'){
+              //alert(atmp2[i]);
+              tmpstr += '^-'+atmp2[i];
+            }//endif
+          }//endfor
+          if(tmpstr != ''){
+            htmlstr += '<span style=\'color:blue;\'><b>'+atmp1[0]+'/</b>';
+            htmlstr += tmpstr + '</span>';
+          }else {
+            htmlstr += atmp1[0];
+            tx2.value+=' '+atmp1[0]; 
+          }
+        }else {
+          htmlstr += atmp1[0];
+        }//endif
+      }else {
+        htmlstr += ''+aengln[engphrs]+'\n';
+      }
+    }//endfor
+  }//endfor
+  dv1.innerHTML = htmlstr;
+  localStorage.setItem('tx2', tx2.value); 
+}//endfunc
 //--------------------------------------
 function func1(){
-  alert('Clicked here!');
+  //btn2.style.color = '#ffffff';
+  spmsg.innerHTML = 'Submitted!';
+  localStorage.setItem('tx1', tx1.value);
+  localStorage.setItem('tx2', tx2.value);
+  localStorage.setItem('tx3', tx3.value);
+
+  let strout = '';
+  const atx = tx1.value
+        .replace(/([\-\'\"\(\)]{1,1})([a-zA-Z0-9\-]+)/g, '$1 $2')
+        .replace(/(\w)([\-\'\"\(\)\,\.\:\;\!\?\/\\]{1,1})/g, '$1 $2')
+        .split(/[\n]/);
+  atx.forEach( (engl) => {
+    if(engl.trim()==""){
+      strout+="\n///\n";
+    }
+  
+    const awrds = engl
+        .replace(/([\-\'\"\(\)]{1,1})([a-zA-Z0-9\-]+)/g, '$1 $2')
+        .replace(/(\w)([\-\'\"\(\)\,\.\:\;\!\?\/\\]{1,1})/g, '$1 $2')
+        .split(/[\s\t]/);
+  
+    awrds.forEach( (engw) => {
+  
+      const lwrd = vocab_cym_2411js[engw.toLowerCase()];
+      if(engw.match(/[^a-zA-Z]/)){
+        strout += engw;
+      }else{
+        if(typeof lwrd != "undefined"){
+          console.log(lwrd);
+          //const tmp1 = lwrd.split(/\//);
+          let bshow = false;
+          if(lwrd.match(/\(n|\(vb|\(ad/) ){ 
+            bshow = true;
+  //console.log("[0]____"+lwrd);
+          }else {
+  //console.log("[1]____"+lwrd);
+          }
+          const regex = RegExp(' '+engw+' ');
+  const skipwords=' ' + ' and upon no yes none one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty the in was were am is will be not isn\'t of these those this that ' + ' ' + tx2.value.replace(/[\r\n\t]{1,1}/g, ' ') +' '; 
+          if(skipwords.match(regex)) bshow = false;
+          if(bshow==true){
+  //console.log("[2]____"+lwrd);
+            let awrd = lwrd.split(/\//);
+            let wrds = '';
+            for(let i=0; i<awrd.length; i++){
+              if(awrd[i].match(/\(n|\(vb|\(ad/) ){ 
+                wrds += '/'+awrd[i];
+              }
+            }//endfor
+            strout += '|!' + engw+'/'+wrds + '|';
+          }else {
+            strout += engw;
+          }
+        }else {
+          console.log("UNDEFINED!!____"+engw);
+          strout += engw;
+        }
+      }
+      strout += ' ';
+    });
+  });
+  txout.value = strout;
+  //btn2.style.visibility = 'visible';
+  //btn2.style.color = '#000000';
+  localStorage.setItem('txout', txout.value); 
+}//endfunc
+//--------------------------------------
+function loadvocab(){ 
+  const testword = "ship";
+  spmsg.innerHTML = "vocab loaded: " + testword + " - " + vocab_cym_2411js[testword];
 }//endfunc
 //--------------------------------------
 </script>
