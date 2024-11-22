@@ -1,5 +1,12 @@
 <!DOCTYPE html><html><head>
 <meta name='viewport' content='width=device-width, initial-scale=1' />
+<style>
+pre  {white-space:pre-wrap;word-wrap:break-word;} 
+span {font-size:90%;white-space:nowrap;} 
+button {font-size:55%;margin:0px;padding:0px;white-space:nowrap;}  
+textarea {font-size:80%;height:100px;word-break:break-all;}  
+</style>
+<script src='../../jsproj/txutilsjs/txutils.js'></script>  
 </head>
 <body>
 <b>
@@ -11,32 +18,61 @@ github.com/ianlow27/trhelptxhtml
 |Copyright (c) 2024 Ian Low
 |Usage Rights: MIT License
 [<span style='color:blue;' id='spmsg'>loading vocab...</span>]
-<table style='width:90%;' border=0 cellspacing=0 cellpadding=0 >
+<table style='width:98%;' border=0 cellspacing=2 cellpadding=2 >
 <tr>
-<td valign='top' style='width:60%;padding:0px;margin:0px;'>
-English text input:
-<textarea id='tx1' style='width:98%;height:150px;'></textarea>
+<td valign='top' style='width:35%;padding:0px;margin:0px;'>
+<span>English text input:</span>
+<textarea id='tx1' style='width:97%;xheight:150px;'></textarea><br/>
+<button id='btnsave1' onclick='backup("1");'>Bckp</button> 
+<button id='btnview1' onclick='viewbck("1");'>Vw</button> 
+<button id='btnrevert1' onclick='revert("1");'>Rvrt</button> 
 </td>
-<td valign='top' style='width:10%;padding:0px;margin:0px;'>
-Ignore: 
-<textarea id='tx2' style='font-size:80%;width:90%;height:150px;'></textarea>
+<td valign='top' style='width:32%;padding:0px;margin:0px;'>
+<span>Ignore:</span>
+<textarea id='tx2' style='font-size:80%;width:93%;xheight:150px;'></textarea><br/>
+<button id='btnsave2' onclick='backup("2");'>Bckp</button> 
+<button id='btnview2' onclick='viewbck("2");'>Vw</button> 
+<button id='btnrevert2' onclick='revert("2");'>Rvrt</button> 
 </td>
-<td valign='top' style='width:25%;padding:0px;margin:0px;'>
-New vocab:
+<td valign='top' style='width:32%;padding:0px;margin:0px;'>
+<span>New vocab:</span>
 <nobr> 
-<textarea id='tx3' style='font-size:80%;width:90%;height:150px;'></textarea>
-<button id='btn1' style='vertical-align:top;' onclick='func1();'>Submit</button> 
+<textarea id='tx3' style='font-size:80%;width:93%;xheight:150px;'></textarea><br/>
+<button id='btnsave3' onclick='backup("3");'>Bckp</button>  
+<button id='btnview3' onclick='viewbck("3");'>Vw</button> 
+<button id='btnrevert3' onclick='revert("3");'>Rvrt</button>
 </nobr>
 </td>
-</tr>
+</t=dr>
 </table>
+
+<dialog id='dlg1' style='margin-top:0px;'>
+  <button autofocus onclick='dlg1cls();'>Close</button>
+  <pre id='prdlg1'></pre>
+</dialog>
+
+
+<button id='btn1' style='vertical-align:top;' onclick='func1();'>Submit</button> 
 <div style='width:97%;'> 
-<textarea id='txout' style='width:90%;height:150px;'></textarea>
+<textarea id='txout' style='width:98%;xheight:150px;'></textarea>
+<br/> 
 <button id='btn2' style='vertical-align:top;' onclick='func2();'>Submit</button>
 </div>
 <div id='dv1'></div> 
 <script src='./vocab_cym_2411.js'></script> 
 <script>
+/*
+let tmpstr1 = '\
+*asdasd=asdsadsadsad\n\
+*as3asd=asdsadsadsad\n\
+*as1asd=asdsadsadsad\n\
+*as2asd=asdsadsadsad\n\
+*as3asd=asdsadsadsad\n\
+*as2asd=asdsadsadsad\n\
+*as3asd=asdsadsadsad\n\
+*as1asd=asdsadsadsad';
+alert(sortuniq(tmpstr1, '\n'));
+*/
   setTimeout("loadvocab();", 5 * 1000);
   const tx1   = document.getElementById('tx1'); 
   const tx2   = document.getElementById('tx2');
@@ -57,6 +93,7 @@ New vocab:
 function func2(){ 
   let htmlstr='';
   const atx = txout.value.split(/\n/);
+  let vcbstr='';
   for(engln in atx){
     console.log(atx[engln]);
     if(atx[engln].trim() == ''){ htmlstr+='<br/>\n'; continue; }
@@ -73,6 +110,7 @@ function func2(){
             if(atmp2[i].substr(0,1)=='@'){
               //alert(atmp2[i]);
               tmpstr += '^-'+atmp2[i];
+              vcbstr+='\n*' + atmp1[0] + '=' + atmp2[i].substr(1);
             }//endif
           }//endfor
           if(tmpstr != ''){
@@ -91,10 +129,21 @@ function func2(){
     }//endfor
   }//endfor
   dv1.innerHTML = htmlstr;
-  localStorage.setItem('tx2', tx2.value); 
+  tx2.value =  sortuniq(tx2.value,' '); 
+  tx3.value =  sortuniq(tx3.value + vcbstr,'\n'); 
+  localStorage.setItem('tx2', tx2.value);  
+  localStorage.setItem('tx3', tx3.value);  
 }//endfunc
 //--------------------------------------
 function func1(){
+
+  atx3 = tx3.value.split(/\n/);
+  //alert(atx3[0]);
+  let anewvcb = new Array();
+  anewvcb = groupval2listbykey(atx3, '=', '/'); 
+  //alert(anewvcb['*truth']);
+  //return;
+
   //btn2.style.color = '#ffffff';
   spmsg.innerHTML = 'Submitted!';
   localStorage.setItem('tx1', tx1.value);
@@ -102,6 +151,7 @@ function func1(){
   localStorage.setItem('tx3', tx3.value);
 
   let strout = '';
+  const skipwords=' ' + ' and upon no yes none one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty the in was were am is will be not isn\'t of these those this that ' + ' ' + tx2.value.replace(/[\r\n\t]{1,1}/g, ' ') +' '; 
   const atx = tx1.value
         .replace(/([\-\'\"\(\)]{1,1})([a-zA-Z0-9\-]+)/g, '$1 $2')
         .replace(/(\w)([\-\'\"\(\)\,\.\:\;\!\?\/\\]{1,1})/g, '$1 $2')
@@ -117,54 +167,94 @@ function func1(){
         .split(/[\s\t]/);
   
     awrds.forEach( (engw) => {
-  
-      const lwrd = vocab_cym_2411js[engw.toLowerCase()];
-      if(engw.match(/[^a-zA-Z]/)){
-        strout += engw;
-      }else{
-        if(typeof lwrd != "undefined"){
-          console.log(lwrd);
-          //const tmp1 = lwrd.split(/\//);
-          let bshow = false;
-          if(lwrd.match(/\(n|\(vb|\(ad/) ){ 
-            bshow = true;
-  //console.log("[0]____"+lwrd);
-          }else {
-  //console.log("[1]____"+lwrd);
-          }
-          const regex = RegExp(' '+engw+' ');
-  const skipwords=' ' + ' and upon no yes none one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty the in was were am is will be not isn\'t of these those this that ' + ' ' + tx2.value.replace(/[\r\n\t]{1,1}/g, ' ') +' '; 
-          if(skipwords.match(regex)) bshow = false;
-          if(bshow==true){
-  //console.log("[2]____"+lwrd);
-            let awrd = lwrd.split(/\//);
-            let wrds = '';
-            for(let i=0; i<awrd.length; i++){
-              if(awrd[i].match(/\(n|\(vb|\(ad/) ){ 
-                wrds += '/'+awrd[i];
-              }
-            }//endfor
-            strout += '|!' + engw+'/'+wrds + '|';
-          }else {
-            strout += engw;
-          }
+      let bshow = false;
+      const regex = RegExp(' '+engw+' ');
+      if(typeof anewvcb['*'+engw.toLowerCase()] != 'undefined'){
+        if(!skipwords.match(regex)) bshow = true;
+        if(bshow){
+          strout += '|!' + engw+'//'+anewvcb['*'+engw.toLowerCase()] + '|';
         }else {
-          console.log("UNDEFINED!!____"+engw);
           strout += engw;
         }
-      }
+      }else {
+    
+        const lwrd = vocab_cym_2411js[engw.toLowerCase()];
+        if(engw.match(/[^a-zA-Z]/)){
+          strout += engw;
+        }else{
+          if(typeof lwrd != "undefined"){
+            console.log(lwrd);
+            //const tmp1 = lwrd.split(/\//);
+            if(lwrd.match(/\(n|\(vb|\(ad/) ){ 
+              bshow = true;
+    //console.log("[0]____"+lwrd);
+            }else {
+    //console.log("[1]____"+lwrd);
+            }
+            if(skipwords.match(regex)) bshow = false;
+            if(bshow==true){
+    //console.log("[2]____"+lwrd);
+              let awrd = lwrd.split(/\//);
+              let wrds = '';
+              for(let i=0; i<awrd.length; i++){
+                if(awrd[i].match(/\(n|\(vb|\(ad/) ){ 
+                  wrds += '/'+awrd[i];
+                }
+              }//endfor
+              strout += '|!' + engw+'/'+wrds + '|';
+            }else {
+              strout += engw;
+            }
+          }else {
+            console.log("UNDEFINED!!____"+engw);
+            strout += engw;
+          }
+        }
+      }//endif
       strout += ' ';
-    });
-  });
+    });//endForEach engw
+  });//endForEach engl
   txout.value = strout;
   //btn2.style.visibility = 'visible';
   //btn2.style.color = '#000000';
   localStorage.setItem('txout', txout.value); 
 }//endfunc
 //--------------------------------------
-function loadvocab(){ 
+function loadvocab(){  
   const testword = "ship";
   spmsg.innerHTML = "vocab loaded: " + testword + " - " + vocab_cym_2411js[testword];
+}//endfunc
+//--------------------------------------
+function backup(poption){ 
+  txobj = document.getElementById('tx'+poption);
+  if(promptok('About to save this.', txobj.value)){
+    savetolocstor('backup'+poption, txobj.value);
+    alert('saved!');
+  }else {
+    alert('not saved!');
+  }
+}//endfunc
+//--------------------------------------
+function viewbck(poption){ 
+  dlg1 = document.getElementById('dlg1');
+  prdlg1.innerHTML = getfromlocstor('backup'+poption);
+  dlg1.showModal();
+}//endfunc
+//--------------------------------------
+function revert(poption){ 
+  txobj = document.getElementById('tx'+poption);
+  if(promptok('About to revert to backup. Are you sure?',txobj.value)){
+    txobj.value = getfromlocstor('backup'+poption);
+    alert('reverted!');
+  }else {
+    alert('not reverted!');
+  }
+
+}//endfunc
+//--------------------------------------
+function dlg1cls(){ 
+  dlg1 = document.getElementById('dlg1');
+  dlg1.close();
 }//endfunc
 //--------------------------------------
 </script>
