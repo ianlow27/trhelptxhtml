@@ -7,6 +7,8 @@
 
 - investigate no output when submitting long text
 
+## v0.0.5_241127 - Additional features including auto-detection and resizing of controls dependent on platform, and export button to export ignore-list and new vocab.
+
 ## v0.0.4_241125 - Additional features and modifications, indentation of paragraphs, preserve @ symbols, make text more legible, pressed button indicator, remove space in front of punctuation marks, add buttons for English words to ignore.
 - a:indent on new paragraph in html output
 - b:1st submit - if @ exist to preserve it when resubmitting

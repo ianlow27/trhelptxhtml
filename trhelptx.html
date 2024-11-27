@@ -30,6 +30,7 @@ github.com/ianlow27/trhelptxhtml
 3. The 3 top textboxes are not saved until clicking 'Submit'.
 4. Clearing cache WILL DELETE ALL SAVED TEXTS INCLUDING BACKUPS!!! Therefore make sure to backup separately to external file.
 5. Make sure to save HTML and JavaScript sources as UTF-8 for the correct rendering of accents, i.e. a^ to â, a% to ä, a` to à, and a´ to á.
+6. Enter @@ in the line beginning with /// in the bottom textbox to indicate the start line of processing.
   </pre>
 </details>
 </div>
@@ -79,21 +80,60 @@ github.com/ianlow27/trhelptxhtml
 
 
 <button id='btn1' style='vertical-align:top;' onclick='func1();'>Submit & save</button> 
+
+<button id='btnbckall' style='vertical-align:top;' onclick='backupall();'>Backup all</button> 
+
+<button id='btnexprt' style='vertical-align:top;' onclick='exp2clipbrd();'>Export to clipboard</button> 
+
+
 <div style='width:97%;'> 
-<textarea id='txout' style='width:98%;height:200px;'></textarea>
+<textarea id='txout' style='font-family:Times New Roman;font-size:70%;width:98%;height:200px;'></textarea>
 <br/> 
 
 
-<button id='btn2' style='vertical-align:top;' onclick='func2(2);'>Submit only</button>
+<button id='btn2' style='vertical-align:top;' onclick='func2("subm");'>Submit only</button>
 
-<button id='btn4' style='vertical-align:top;' onclick='func2(4);'>Submit for landscape</button>
+<button id='btn4' style='vertical-align:top;' onclick='func2("subml");'>Submit for landscape</button>
 
-<button id='btn3' style='vertical-align:top;' onclick='func2(3);'>Submit & add to ignore</button>
+<button id='btn3' style='vertical-align:top;' onclick='func2("submi");'>Submit & add to ignore</button>
 
 </div>
 <div id='dv1' style='font-size:80%;padding:2px;margin-top:0px;'></div> 
 <script src='./vocab_cym_2411.js'></script> 
 <script>
+	
+
+if(!isMobile()){
+  const atags=String('dialog span pre textarea button').split(/ /);
+  for(h in atags){
+    let i=0;
+    while(true){
+      if(typeof 
+        document.getElementsByTagName(atags[h])[i]!= 'undefined'){
+        document.getElementsByTagName(atags[h])[i]
+          .style.fontSize='100%';
+        i++;
+        if(i>50) break;
+      }else break;
+    }//endwhile
+  }//endfor
+}//endif
+
+
+let tmpstr1 = '\
+*asdasd=asdsadsadsad\n\
+*as3asd=asdsadsadsad\n\
+*as1asd=asdsadsadsad\n\
+*as2asd=asdsadsadsad\n\
+*as3asd=asdsadsadsad\n\
+*as2asd=asdsadsadsad\n\
+*as3asd=asdsadsadsad\n\
+*as1asd=asdsadsadsad';
+
+//navigator.clipboard.writeText(tmpstr1);
+
+
+//alert(tmpstr1);
 /*
 let tmpstr1 = '\
 *asdasd=asdsadsadsad\n\
@@ -121,6 +161,13 @@ alert(sortuniq(tmpstr1, '\n'));
   txout.value = localStorage.getItem('txout');
   tx1.focus();
   dv1.innerHTML= "<div style='background-color:#ffddbb;'>Output here!</div>";
+  
+  
+  
+  
+  
+ 
+
 //--------------------------------------
 // Function for processing of text to HTML output
 function func2(popt){ 
@@ -135,11 +182,15 @@ alert(e.message);
 alert(3653);
 return;
 */
-  const btnobj = document.getElementById('btn'+String(popt));
+  let btnnum='2';
+  if(popt=='subml') btnnum='4';
+  else if(popt=='submi') btnnum='3';
+  
+  const btnobj = document.getElementById('btn'+btnnum);
   btnobj.style.color='lightgrey'; //!!
-  setTimeout('btn'+String(popt)+'.style.color="black";',1000);
+  setTimeout('btn'+btnnum+'.style.color="black";',1000);
 
-  if(popt==4){
+  if(popt=='subml'){
     dv1.style.padding='100px';
     dv1.style.marginTop='50px';
     dv1.style.fontSize='110%';
@@ -149,19 +200,28 @@ return;
     dv1.style.fontSize='80%';
   }
 
+  let bshow=0;
+  if(popt=='subml') bshow=1;
+  
   let htmlstr='';
   const atx = txout.value.split(/\n/);
   let vcbstr='';
   for(engln in atx){
     console.log(atx[engln]);
     if(atx[engln].trim() == ''){ 
-        htmlstr+='<br/>\n'; continue; 
+       if(bshow) htmlstr+='<br/>\n'; continue; 
     }
     if(atx[engln].trim().substr(0,3) == '///'){ 
-      if(popt!=4){
-         htmlstr+='<br/>'+atx[engln];
+      if(popt!='subml'){
+         if(atx[engln].match(/_\d+\@\@/)){
+           const lineref=atx[engln].replace(/\D/g, '');
+           //alert(lineref);
+           savetolocstor('lineref', lineref);
+           bshow=1;
+         }
+         if(bshow) htmlstr+='<br/>'+atx[engln];
       }
-      htmlstr+='<br/>\n'; continue;
+      if(bshow) htmlstr+='<br/>\n'; continue;
     }
     const aengln = atx[engln].split(/\|/);
     for(engphrs in aengln){
@@ -179,21 +239,23 @@ return;
             }//endif
           }//endfor
           if(tmpstr != ''){
-            htmlstr += '<span style=\'color:blue;\'><b>'+atmp1[0]+'/</b>';
-            htmlstr += tmpstr + '</span>';
+            if(bshow) htmlstr += '<span style=\'color:blue;\'><b>'+atmp1[0]+'/</b>';
+            if(bshow) htmlstr += tmpstr + '</span>';
           }else {
-            htmlstr += rmleadspc(atmp1[0]);
-            if(popt==3) tx2.value+=' '+atmp1[0].toLowerCase(); 
+            if(bshow) htmlstr += rmleadspc(atmp1[0]);
+            if(popt=='submi') tx2.value+=' '+atmp1[0].toLowerCase(); 
           }
         }else {
-          htmlstr += rmleadspc(atmp1[0]);
+          if(bshow) htmlstr += rmleadspc(atmp1[0]);
         }//endif
       }else {
-        htmlstr += ''+rmleadspc(aengln[engphrs].replace(/ _/g, ' ').replace(/^_/g, '&emsp;'))+'\n';
+        if(bshow) htmlstr += ''+rmleadspc(aengln[engphrs].replace(/ _/g, ' ').replace(/^_/g, '&emsp;'))+'\n';
       }
     }//endfor
   }//endfor
   dv1.innerHTML = htmlstr;
+
+  localStorage.setItem('txout', txout.value);
 
   tx2.value =  sortuniq(tx2.value,' '); 
   localStorage.setItem('tx2', tx2.value);  
@@ -206,6 +268,7 @@ return;
 //--------------------------------------
 function func1(){
 
+  const lineref=getfromlocstor('lineref');
   btn1.style.color='lightgrey'; //!!
   setTimeout('btn1.style.color="black";',1000);
 
@@ -225,23 +288,26 @@ function func1(){
   let strout = '';
   const skipwords=' ' + ' and upon no yes none one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty the in was were am is will be not isn\'t of these those this that ' + ' ' + tx2.value.replace(/[\r\n\t]{1,1}/g, ' ') +' '; 
   const atx = tx1.value.trim()
-        .replace(/([\-\'\"\(\)]{1,1})([a-zA-Z0-9\-]+)/g, '$1 $2')
-        .replace(/(\w)([\-\'\"\(\)\,\.\:\;\!\?\/\\]{1,1})/g, '$1 $2')
+        .replace(/([“”\-\'\"\(\)]{1,1})([a-zA-Z0-9\-]+)/g, '$1 $2')
+        .replace(/(\w)([“”\-\'\"\(\)\,\.\:\;\!\?\/\\]{1,1})/g, '$1 $2')
         .split(/[\n]/);
   let countref=0
   atx.forEach( (engl) => {
     if(engl.trim()==""){
-      strout+="\n///__________"+(countref++)+"\n";
+      strout+="\n///__________"+(countref);
+      if(countref==lineref) strout+='@@';
+      strout+="\n";
+      countref++;
     }
-  
+//   “” 
     const awrds = engl
-        .replace(/([\-\'\"\(\)]{1,1})([a-zA-Z0-9\-]+)/g, '$1 $2')
-        .replace(/(\w)([\-\'\"\(\)\,\.\:\;\!\?\/\\]{1,1})/g, '$1 $2')
+        .replace(/([“”\-\'\"\(\)]{1,1})([a-zA-Z0-9\-]+)/g, '$1 $2')
+        .replace(/(\w)([“”\-\'\"\(\)\,\.\:\;\!\?\/\\]{1,1})/g, '$1 $2')
         .split(/[\s\t]/);
   
     awrds.forEach( (engw) => {
       let bshow = false;
-      const regex = RegExp(' '+engw+' ');
+      const regex = RegExp(' '+engw+' ','i');
       if(typeof anewvcb['*'+engw.toLowerCase()] != 'undefined'){
         if(!skipwords.match(regex)) bshow = true;
         if(bshow){
@@ -253,7 +319,7 @@ function func1(){
           strout += '_'+engw;
         }
       }else {
-    
+        /*
         const lwrd = vocab_cym_2411js[engw.toLowerCase()];
         if(engw.match(/[^a-zA-Z]/)){
           strout += '_'+engw;
@@ -284,6 +350,27 @@ function func1(){
           }else {
             console.log("UNDEFINED!!____"+engw);
             strout += '_'+engw;
+          }//endif
+        }//endif
+        */
+        if(skipwords.match(regex)){
+          bshow = false;
+          strout += '_'+ engw;
+        }else {
+          const retval=searchmainvcb(engw);
+          if(retval=='!!NOTFOUND'){
+            if(engw.match(/s$/)){
+              const retval2=searchmainvcb(engw.replace(/s$/,''), engw);
+              if(retval2=='!!NOTFOUND'){
+                strout += '_'+ engw;
+              }else {
+                strout += retval2;
+              }
+            }else {
+              strout += '_'+ engw;
+            }
+          }else {
+            strout+=retval;
           }
         }
       }//endif
@@ -296,9 +383,70 @@ function func1(){
   localStorage.setItem('txout', txout.value); 
 }//endfunc
 //--------------------------------------
+function searchmainvcb(engw, origw=engw){  
+let strout='';
+let bshow=false;
+//const regex = RegExp(' '+engw+' ','i');
+const lwrd = vocab_cym_2411js[engw.toLowerCase()];
+if(engw.match(/[^a-zA-Z]/)){
+  strout += '_'+engw; //NOT A WORD
+}else{
+  if(typeof lwrd != "undefined"){ //WORD FOUND
+    console.log(lwrd);
+    //const tmp1 = lwrd.split(/\//);
+    if(lwrd.match(/\(n|\(vb|\(ad/) ){ //IS N/VB/ADJV
+      bshow = true;
+//console.log("[0]____"+lwrd);
+    }else {
+//console.log("[1]____"+lwrd);
+    }
+    //if(skipwords.match(regex)) bshow = false;
+    if(bshow==true){
+//console.log("[2]____"+lwrd);
+      let awrd = lwrd.split(/\//);
+      let wrds = '';
+      let sfx='';
+      if(engw!=origw) sfx='p';
+      for(let i=0; i<awrd.length; i++){
+        if(awrd[i].match(/\(n|\(vb|\(ad/) ){ 
+          wrds += '/'+awrd[i]+sfx;
+        }
+      }//endfor
+      strout += '|!_' + origw+'/'+wrds + '|';
+    }else {
+      strout += '_'+ engw;
+    }
+  }else {
+    console.log("UNDEFINED!!____"+engw);
+    //strout += '_'+engw;
+    return '!!NOTFOUND';
+  }//endif
+}//endif
+
+//if(bshow){
+  return strout;
+//}
+//return ('_'+engw);
+//return '!!IGNOREWORD';
+}//endfunc
+//--------------------------------------
 function loadvocab(){  
   const testword = "ship";
   spmsg.innerHTML = "vocab loaded: " + testword + " - " + vocab_cym_2411js[testword];
+}//endfunc
+//--------------------------------------
+function backupall(){ 
+  //tx1 = document.getElementById('tx1');
+  //tx2 = document.getElementById('tx2');
+  //tx3 = document.getElementById('tx3');
+  if(promptok('About to save all 3 textboxes.')){
+    savetolocstor('backup1', tx1.value);
+    savetolocstor('backup2', tx2.value);
+    savetolocstor('backup3', tx3.value);
+    alert('All 3 textboxes saved!');
+  }else {
+    alert('No textbox not saved!');
+  }
 }//endfunc
 //--------------------------------------
 function backup(poption){ 
@@ -331,6 +479,16 @@ function revert(poption){
 function dlg1cls(){ 
   dlg1 = document.getElementById('dlg1');
   dlg1.close();
+}//endfunc
+//--------------------------------------
+function exp2clipbrd(){
+  txout.value='';
+  txout.value=
+       tx2.value + 
+       '\n~~~~~~~~~~\n' + 
+       tx3.value;
+  txout.focus(); txout.select();
+  setTimeout("document.execCommand('copy');func1();",1000);
 }//endfunc
 //--------------------------------------
 </script>
