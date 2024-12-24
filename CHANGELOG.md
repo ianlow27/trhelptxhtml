@@ -1,10 +1,9 @@
-# Changelog 
+# Changelog
 
 ## TO DO LIST
 - : to do item 1
 - : to do item 2
 - : to do item 3
-
 - investigate no output when submitting long text
 
 ## v0.0.5_241127 - Additional features including auto-detection and resizing of controls dependent on platform, and export button to export ignore-list and new vocab.
